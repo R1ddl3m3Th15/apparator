@@ -17,6 +17,11 @@ def main():
         for s in subs[:5]:
             print("   •", s["title"], "→", s["url"])
 
+        if subs:
+            print("→ Fetching first submission…")
+            details = hr.fetch_submission(subs[0], download_dir=".")
+            print("Downloaded:", details.get("pdf"))
+
 
 if __name__ == "__main__":
     main()
