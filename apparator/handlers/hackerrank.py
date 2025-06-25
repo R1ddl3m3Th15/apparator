@@ -31,40 +31,68 @@ class HackerRankHandler(SiteHandler):
             "https://www.hackerrank.com/dashboard", timeout=20000)
 
     def list_submissions(self) -> List[Dict[str, Any]]:
-        """
-        Visit the global all-submissions page and collect entries.
-        """
-        self.page.goto(
-            "https://www.hackerrank.com/submissions/all",
-            wait_until="domcontentloaded",
-            timeout=60000
-        )
-        items = self.page.query_selector_all(".submissions-list-item")
+        """Return a list of all submissions across every page."""
+
+        page_num = 1
         results: List[Dict[str, Any]] = []
-        for itm in items:
-            link = itm.query_selector("a.challenge-link").get_attribute("href")
-            title = itm.query_selector(".challenge-name").inner_text()
-            results.append({"title": title, "url": link})
+
+        while True:
+            self.page.goto(
+                f"https://www.hackerrank.com/submissions/all?page={page_num}",
+                wait_until="domcontentloaded",
+                timeout=60000,
+            )
+
+            items = self.page.query_selector_all(".submissions-list-item")
+            if not items:
+                break
+
+            for itm in items:
+                link_el = itm.query_selector("a.challenge-link")
+                if not link_el:
+                    continue
+                link = link_el.get_attribute("href")
+                title = itm.query_selector(".challenge-name").inner_text().strip()
+                time_el = itm.query_selector(".submission-time")
+                timestamp = time_el.inner_text().strip() if time_el else ""
+                results.append({
+                    "title": title,
+                    "url": link,
+                    "timestamp": timestamp,
+                })
+
+            next_btn = self.page.query_selector("li.pagination-next:not(.disabled) a")
+            if not next_btn:
+                break
+            page_num += 1
+
         return results
 
-    def fetch_submission(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Given a submission entry, navigate to its page and extract details.
-        """
+    def fetch_submission(self, entry: Dict[str, Any], download_dir: str = "") -> Dict[str, Any]:
+        """Download the submission details and problem statement PDF."""
+
         self.page.goto(
             entry["url"],
             wait_until="domcontentloaded",
-            timeout=60000
+            timeout=60000,
         )
-        title = self.page.query_selector(".challenge-heading").inner_text()
-        statement = self.page.query_selector(
-            ".challenge-description"
-        ).inner_text()
-        code = self.page.query_selector(
-            ".editor-content"
-        ).inner_text()
+
+        title = self.page.query_selector(".challenge-heading").inner_text().strip()
+        statement = self.page.query_selector(".challenge-description").inner_text()
+        code = self.page.query_selector(".editor-content").inner_text()
+
+        pdf_path = None
+        if download_dir:
+            self.page.wait_for_selector("a:has-text('Download Problem Statement')")
+            with self.page.expect_download() as dl_info:
+                self.page.click("a:has-text('Download Problem Statement')")
+            download = dl_info.value
+            pdf_path = f"{download_dir}/{title}.pdf"
+            download.save_as(pdf_path)
+
         return {
             "title": title,
             "statement": statement,
-            "solution": code
+            "solution": code,
+            "pdf": pdf_path,
         }
