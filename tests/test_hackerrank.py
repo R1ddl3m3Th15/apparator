@@ -84,6 +84,14 @@ def test_list_submissions_pagination():
     assert page.gotos == [1, 2]
 
 
+def test_list_submissions_absolute_urls():
+    HackerRankHandler = load_handler()
+    page = DummyPage()
+    hr = HackerRankHandler(page, {})
+    results = hr.list_submissions()
+    assert results[0]["url"].startswith("https://www.hackerrank.com/")
+
+
 class DummyDownload:
     def __init__(self):
         self.saved_to = None
