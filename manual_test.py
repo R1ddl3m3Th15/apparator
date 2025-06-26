@@ -1,4 +1,6 @@
 # manual_test.py
+import pytest
+pytest.importorskip("playwright")
 from apparator.core.browser import with_browsers
 from apparator.handlers.hackerrank import HackerRankHandler
 from apparator.config import get_config

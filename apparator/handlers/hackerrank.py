@@ -66,8 +66,10 @@ class HackerRankHandler(SiteHandler):
                     "timestamp": timestamp,
                 })
 
-            next_btn = self.page.query_selector("a[aria-label^='Next page']")
-            if not next_btn:
+            next_btn = self.page.query_selector(
+                "li.pagination-next:not(.disabled) a"
+            )
+            if not next_btn or next_btn.get_attribute("aria-disabled") == "true":
                 break
             page_num += 1
 
