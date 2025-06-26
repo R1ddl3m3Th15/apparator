@@ -3,6 +3,9 @@
 from apparator.core.handler_base import SiteHandler
 from playwright.sync_api import Page
 from typing import List, Dict, Any
+from urllib.parse import urljoin
+
+BASE_URL = "https://www.hackerrank.com"
 
 
 class HackerRankHandler(SiteHandler):
@@ -55,6 +58,8 @@ class HackerRankHandler(SiteHandler):
                 if not link_el:
                     continue
                 link = link_el.get_attribute("href")
+                if link:
+                    link = urljoin(BASE_URL, link)
                 title = link_el.inner_text().strip()
                 time_el = row.query_selector(
                     "td[aria-label*='Time'], td.submission-time"
@@ -78,8 +83,9 @@ class HackerRankHandler(SiteHandler):
     def fetch_submission(self, entry: Dict[str, Any], download_dir: str = "") -> Dict[str, Any]:
         """Download the submission details and problem statement PDF."""
 
+        target = urljoin(BASE_URL, entry["url"])
         self.page.goto(
-            entry["url"],
+            target,
             wait_until="domcontentloaded",
             timeout=60000,
         )
