@@ -26,7 +26,7 @@ Create a virtual environment and install dependencies:
 ```bash
 python -m venv env
 source env/bin/activate
-pip install playwright python-dotenv pytest
+pip install -r requirements.txt
 playwright install
 ```
 
