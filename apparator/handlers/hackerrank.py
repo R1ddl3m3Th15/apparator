@@ -27,8 +27,9 @@ class HackerRankHandler(SiteHandler):
         # Click the submit button
         self.page.click("button[type=submit]")
         # Wait until redirected to dashboard
+        # allow more time here in case the redirect takes a while
         self.page.wait_for_url(
-            "https://www.hackerrank.com/dashboard", timeout=20000)
+            "https://www.hackerrank.com/dashboard", timeout=60000)
 
     def list_submissions(self) -> List[Dict[str, Any]]:
         """Return a list of all submissions across every page."""
