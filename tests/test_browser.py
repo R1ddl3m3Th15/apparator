@@ -1,4 +1,6 @@
 # tests/test_browser.py
+import pytest
+pytest.importorskip("playwright")
 from apparator.core.browser import with_browsers
 
 
