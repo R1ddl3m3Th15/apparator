@@ -140,7 +140,7 @@ class DummyFetchPage:
 def make_fetch_page():
     page = DummyFetchPage()
     page.selectors[".challenge-heading"] = DummyElement("Challenge")
-    page.selectors[".challenge-description"] = DummyElement("Statement")
+    page.selectors[".challenge_problem_statement .hackdown-content"] = DummyElement("Statement")
     page.selectors[".editor-content"] = DummyElement("print('hi')")
     return page
 
@@ -167,6 +167,6 @@ def test_fetch_submission_download_pdf(tmp_path):
     expected_pdf = str(tmp_path / "Challenge.pdf")
     assert result["pdf"] == expected_pdf
     assert page.download.saved_to == expected_pdf
-    assert page.waited == ["a:has-text('Download Problem Statement')"]
-    assert page.clicked == ["a:has-text('Download Problem Statement')"]
+    assert page.waited == ["#pdf-link"]
+    assert page.clicked == ["#pdf-link"]
 
