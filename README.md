@@ -44,3 +44,24 @@ python manual_test.py
 ```
 
 Both scripts expect the environment variables shown above to be present.
+
+## Command line interface
+
+`apparator/cli.py` provides a simple command line wrapper around
+`HackerRankHandler`. Use it to list your submissions or download a single
+submission by its index.
+
+List all submissions:
+
+```bash
+python -m apparator.cli list
+```
+
+Fetch a submission (use the index printed by the list command):
+
+```bash
+python -m apparator.cli fetch 0
+```
+
+Run with `-h` to see all options including `--headless` and the output
+directory for downloaded PDFs.
