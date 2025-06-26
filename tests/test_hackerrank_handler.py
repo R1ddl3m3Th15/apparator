@@ -10,6 +10,8 @@ from apparator.config import get_config
 #@pytest.mark.skip("needs real credentials and is an integration test")
 def test_hackerrank_list_submissions():
     config = get_config()
+    if not config.get("HR_USER") or not config.get("HR_PASS"):
+        pytest.skip("HackerRank credentials not configured")
     with with_browsers(headless=False) as bm:
         page = bm.new_page()
         hr = HackerRankHandler(page, config)
