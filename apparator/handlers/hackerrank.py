@@ -43,17 +43,21 @@ class HackerRankHandler(SiteHandler):
                 timeout=60000,
             )
 
-            items = self.page.query_selector_all(".submissions-list-item")
-            if not items:
+            rows = self.page.query_selector_all(
+                "table[aria-label='Submissions Table'] tbody tr"
+            )
+            if not rows:
                 break
 
-            for itm in items:
-                link_el = itm.query_selector("a.challenge-link")
+            for row in rows:
+                link_el = row.query_selector("a")
                 if not link_el:
                     continue
                 link = link_el.get_attribute("href")
-                title = itm.query_selector(".challenge-name").inner_text().strip()
-                time_el = itm.query_selector(".submission-time")
+                title = link_el.inner_text().strip()
+                time_el = row.query_selector(
+                    "td[aria-label*='Time'], td.submission-time"
+                )
                 timestamp = time_el.inner_text().strip() if time_el else ""
                 results.append({
                     "title": title,
@@ -61,7 +65,7 @@ class HackerRankHandler(SiteHandler):
                     "timestamp": timestamp,
                 })
 
-            next_btn = self.page.query_selector("li.pagination-next:not(.disabled) a")
+            next_btn = self.page.query_selector("a[aria-label^='Next page']")
             if not next_btn:
                 break
             page_num += 1
