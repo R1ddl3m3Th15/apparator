@@ -34,13 +34,19 @@ playwright install
 
 After setting up your `.env` file you can run one of the provided scripts:
 
-* `scripts/process_submissions.py` – iterates over your submissions and processes them (implementation not included in this prototype).
+* `scripts/process_submissions.py` – download new submissions and commit them to a Git repository. Use `--repo` to specify the target repo and `--headless` to run the browser without a UI.
 * `manual_test.py` – simple demo that logs in and prints the first few submissions.
 
-Example:
+Examples:
 
 ```bash
 python manual_test.py
+```
+
+Process and commit new submissions to a repository:
+
+```bash
+python scripts/process_submissions.py --repo /path/to/repo --headless
 ```
 
 Both scripts expect the environment variables shown above to be present.
