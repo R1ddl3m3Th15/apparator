@@ -74,7 +74,16 @@ class HackerRankHandler(SiteHandler):
             next_btn = self.page.query_selector(
                 "li.pagination-next:not(.disabled) a"
             )
-            if not next_btn or next_btn.get_attribute("aria-disabled") == "true":
+            if not next_btn:
+                next_btn = self.page.query_selector("a[rel='next']")
+            if not next_btn:
+                next_btn = self.page.query_selector("a[aria-label='Next']")
+            if not next_btn:
+                break
+            disabled = next_btn.get_attribute("disabled") or next_btn.get_attribute(
+                "aria-disabled"
+            )
+            if disabled and disabled != "false":
                 break
             page_num += 1
 
@@ -90,15 +99,30 @@ class HackerRankHandler(SiteHandler):
             timeout=60000,
         )
 
-        title = self.page.query_selector(".challenge-heading").inner_text().strip()
-        statement = self.page.query_selector(".challenge-description").inner_text()
-        code = self.page.query_selector(".editor-content").inner_text()
+        title_el = self.page.query_selector(".challenge-heading")
+        if not title_el:
+            title_el = self.page.query_selector("h1")
+        title = title_el.inner_text().strip() if title_el else entry.get("title", "")
+
+        statement_el = self.page.query_selector(
+            ".challenge_problem_statement .hackdown-content"
+        )
+        if not statement_el:
+            statement_el = self.page.query_selector(".challenge-description")
+        statement = statement_el.inner_text() if statement_el else ""
+
+        code_el = self.page.query_selector(".editor-content")
+        if code_el:
+            code = code_el.inner_text()
+        else:
+            self.page.wait_for_selector("textarea.inputarea")
+            code = self.page.input_value("textarea.inputarea")
 
         pdf_path = None
         if download_dir:
-            self.page.wait_for_selector("a:has-text('Download Problem Statement')")
+            self.page.wait_for_selector("#pdf-link")
             with self.page.expect_download() as dl_info:
-                self.page.click("a:has-text('Download Problem Statement')")
+                self.page.click("#pdf-link")
             download = dl_info.value
             pdf_path = f"{download_dir}/{title}.pdf"
             download.save_as(pdf_path)
