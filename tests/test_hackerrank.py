@@ -100,19 +100,40 @@ class DummyDownload:
         self.saved_to = path
 
 
+class DummyResponse:
+    def __init__(self, content=b"data"):
+        self._content = content
+        self.ok = True
+
+    def body(self):
+        return self._content
+
+
 class DummyFetchPage:
-    def __init__(self):
+    def __init__(self, fail_download: bool = False, pdf_href: str = "https://example.com/file.pdf"):
         self.goto_urls = []
         self.clicked = []
         self.waited = []
         self.selectors = {}
         self.download = DummyDownload()
+        self.fail_download = fail_download
+        self.requests = []
+        self.context = types.SimpleNamespace(request=types.SimpleNamespace(get=self.request_get))
+        self.pdf_href = pdf_href
+
+    def request_get(self, url):
+        self.requests.append(url)
+        return DummyResponse()
 
     def goto(self, url, wait_until=None, timeout=None):
         self.goto_urls.append(url)
 
     def query_selector(self, selector):
         return self.selectors.get(selector)
+
+    def get_attribute(self, selector, name):
+        el = self.selectors.get(selector)
+        return el.get_attribute(name) if el else None
 
     def wait_for_selector(self, selector):
         self.waited.append(selector)
@@ -132,16 +153,19 @@ class DummyFetchPage:
 
             @property
             def value(self_inner):
+                if page.fail_download:
+                    raise Exception("timeout")
                 return page.download
 
         return Ctx()
 
 
-def make_fetch_page():
-    page = DummyFetchPage()
+def make_fetch_page(**kwargs):
+    page = DummyFetchPage(**kwargs)
     page.selectors[".challenge-heading"] = DummyElement("Challenge")
     page.selectors[".challenge_problem_statement .hackdown-content"] = DummyElement("Statement")
     page.selectors[".editor-content"] = DummyElement("print('hi')")
+    page.selectors["#pdf-link"] = DummyElement(href=page.pdf_href)
     return page
 
 
@@ -168,5 +192,19 @@ def test_fetch_submission_download_pdf(tmp_path):
     assert result["pdf"] == expected_pdf
     assert page.download.saved_to == expected_pdf
     assert page.waited == ["#pdf-link"]
+    assert page.clicked == ["#pdf-link"]
+
+
+def test_fetch_submission_download_fallback(tmp_path):
+    """Download should fall back to fetching the href when no download event occurs."""
+    HackerRankHandler = load_handler()
+    href = "https://example.com/problem.pdf"
+    page = make_fetch_page(fail_download=True, pdf_href=href)
+    hr = HackerRankHandler(page, {})
+    result = hr.fetch_submission({"url": "https://example.com"}, download_dir=str(tmp_path))
+    expected_pdf = str(tmp_path / "Challenge.pdf")
+    assert result["pdf"] == expected_pdf
+    assert page.download.saved_to is None
+    assert page.requests == [href]
     assert page.clicked == ["#pdf-link"]
 

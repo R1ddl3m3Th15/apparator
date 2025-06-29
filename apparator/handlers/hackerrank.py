@@ -4,6 +4,7 @@ from apparator.core.handler_base import SiteHandler
 from playwright.sync_api import Page
 from typing import List, Dict, Any
 from urllib.parse import urljoin
+from pathlib import Path
 
 BASE_URL = "https://www.hackerrank.com"
 
@@ -121,11 +122,23 @@ class HackerRankHandler(SiteHandler):
         pdf_path = None
         if download_dir:
             self.page.wait_for_selector("#pdf-link")
-            with self.page.expect_download() as dl_info:
-                self.page.click("#pdf-link")
-            download = dl_info.value
             pdf_path = f"{download_dir}/{title}.pdf"
-            download.save_as(pdf_path)
+            try:
+                with self.page.expect_download() as dl_info:
+                    self.page.click("#pdf-link")
+                download = dl_info.value
+                download.save_as(pdf_path)
+            except Exception:
+                href = self.page.get_attribute("#pdf-link", "href")
+                if href:
+                    pdf_url = urljoin(BASE_URL, href)
+                    resp = self.page.context.request.get(pdf_url)
+                    if getattr(resp, "ok", False):
+                        Path(pdf_path).write_bytes(resp.body())
+                    else:
+                        pdf_path = None
+                else:
+                    pdf_path = None
 
         return {
             "title": title,
